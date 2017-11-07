@@ -1,0 +1,148 @@
+##--------------------------------------------------------------------------------------------------------
+#set( $uncapitalizedEntityName = $fn.uncapitalize($entity.name) )
+#set( $jdbc = $jdbcFactory.getInstance($entity) )
+##--------------------------------------------------------------------------------------------------------
+package ${target.javaPackageFromFolder($SRC)};
+
+import java.sql.PreparedStatement;
+import java.sql.*;
+import java.util.Optional;
+
+import com.bolyartech.forge.server.db.DbUtils;
+
+
+/**
+ * ${entity.name} DAO implementation 
+ * 
+ * @author Telosys Tools
+ *
+ */
+public class ${entity.name}DaoImpl implements ${entity.name}Dao {
+
+    private final static String SQL_SELECT = 
+        "$jdbc.sqlSelect";
+
+    private final static String SQL_INSERT = 
+        "$jdbc.sqlInsert";
+
+    private final static String SQL_UPDATE = 
+#if ( $entity.nonKeyAttributesCount > 0 )
+        "$jdbc.sqlUpdate";
+#else
+        "NO UPDATE (NO DATA)";
+#end
+
+    private final static String SQL_DELETE = 
+        "$jdbc.sqlDelete";
+
+    private final static String SQL_COUNT_ALL = 
+        "select count(*) from ${entity.databaseTable}";
+
+#foreach( $attribute in $entity.attributes)
+	private final $attribute.type $attribute.name;
+#end
+
+
+	public ${entity.name}DaoImpl(#foreach( $attribute in $entity.attributes)$attribute.type $attribute.name#if ($foreach.hasNext), #end#end) {
+#foreach( $attribute in $entity.attributes)
+		this.$attribute.name = $attribute.name;
+#end
+	}
+
+
+#foreach( $attribute in $entity.attributes)
+	public $attribute.type ${attribute.getterWithGetPrefix}() {
+		return $attribute.name;
+	}
+
+
+#end
+
+    @Override
+    public ${entity.name}Dao createNew(Connection dbc, #foreach($attribute in $entity.attributes)#if ($attribute.name != "id")final ${attribute.type} ${attribute.name}#if ($foreach.hasNext), #end#end#end) throws SQLException {
+        DbUtils.ensureOperationalDbc(dbc);
+
+        try (PreparedStatement psInsert = dbc.prepareStatement(SQL_INSERT, Statement.RETURN_GENERATED_KEYS)) {
+            int i = 1;
+#foreach( $attribute in $jdbc.attributesForInsert )
+            SetValueUtils.setValue(psInsert, i, ${attribute.getterWithGetPrefix}() ); #if ($foreach.hasNext)i++; #end
+
+#end
+            psInsert.executeUpdate();
+
+            try (ResultSet rs = psInsert.getGeneratedKeys()) {
+                rs.next();
+                return new ${entity.name}DaoImpl(rs.getLong(1), #foreach($attribute in $entity.attributes)#if ($attribute.name != "id")${attribute.name}#if ($foreach.hasNext), #end#end#end);
+            } catch(Exception e) {
+                throw e;
+            }
+        }
+    }
+
+
+    @Override
+    public Optional<${entity.name}Dao> update(Connection dbc, #foreach($attribute in $entity.attributes)#if ($attribute.name != "id")final ${attribute.type} ${attribute.name}#if ($foreach.hasNext), #end#end#end) throws SQLException {
+        DbUtils.ensureOperationalDbc(dbc);
+        
+        try (PreparedStatement psUpdate = dbc.prepareStatement(SQL_UPDATE)) {
+            int i = 1;
+#foreach( $attribute in $jdbc.attributesForInsert )
+            SetValueUtils.setValue(psUpdate, i, ${attribute.getterWithGetPrefix}() ); #if ($foreach.hasNext)i++; #end
+
+#end
+            if (psUpdate.executeUpdate() > 0) {
+                return Optional.of(new ${entity.name}DaoImpl(id, #foreach($attribute in $entity.attributes)#if ($attribute.name != "id")${attribute.name}#if ($foreach.hasNext), #end#end#end));
+            } else {
+                return Optional.empty();
+            }
+        }
+    }
+
+
+    @Override
+    public Optional<${entity.name}Dao> loadById(Connection dbc, final long id) throws SQLException {
+        DbUtils.ensureOperationalDbc(dbc);
+
+        if (id <= 0) {
+            throw new IllegalArgumentException("id <= 0");
+        }
+
+        try (PreparedStatement psLoad = dbc.prepareStatement(SQL_SELECT)) {
+            psLoad.setLong(1, id);
+
+            try (ResultSet rs = psLoad.executeQuery()) {
+                if (rs.next()) {
+                    return Optional.of(new ${entity.name}DaoImpl(#foreach( $attribute in $jdbc.attributesForSelect)rs.$jdbc.resultSetGetter($attribute)("$attribute.databaseName")#if ($foreach.hasNext), #end#end));
+                } else {
+                    return Optional.empty();
+                }
+            }
+        }
+    }
+
+
+    @Override
+    public boolean delete(Connection dbc) throws SQLException {
+        DbUtils.ensureOperationalDbc(dbc);
+
+        try(PreparedStatement psDelete = dbc.prepareStatement(SQL_DELETE)) {
+            psDelete.setLong(1, id);
+            return psDelete.executeUpdate() == 1;
+        } 
+    }
+
+
+    public int count(Connection dbc) throws SQLException {
+        DbUtils.ensureOperationalDbc(dbc);
+
+        try(PreparedStatement psCount = dbc.prepareStatement(SQL_COUNT_ALL)) {
+            try (ResultSet rs = psCount.executeQuery()) {
+                if (rs.next()) {
+                    return rs.getInt(1);
+                }
+            }
+        }
+
+        return -1;
+    }
+}

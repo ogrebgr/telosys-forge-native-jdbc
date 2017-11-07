@@ -1,0 +1,25 @@
+package ${target.javaPackageFromFolder($SRC)};
+
+import java.sql.Connection;
+import java.sql.SQLException;
+import java.util.Optional;
+import java.sql.PreparedStatement;
+import java.sql.Connection;
+
+
+/**
+ * ${entity.name} DAO interface
+ * 
+ * @author Telosys Tools
+ */
+public interface ${entity.name}Dao {
+#foreach( $attribute in $entity.attributes)
+     ${attribute.type} ${attribute.getterWithGetPrefix}();
+#end
+
+    ${entity.name}Dao createNew(Connection dbc, #foreach($attribute in $entity.attributes)#if ($attribute.name != "id")final ${attribute.type} ${attribute.name}#if ($foreach.hasNext), #end#end#end) throws SQLException;
+    Optional<${entity.name}Dao> update(Connection dbc, #foreach($attribute in $entity.attributes)#if ($attribute.name != "id")final ${attribute.type} ${attribute.name}#if ($foreach.hasNext), #end#end#end) throws SQLException;
+    Optional<${entity.name}Dao> loadById(Connection dbc, final long id) throws SQLException;
+    boolean delete(Connection dbc) throws SQLException;
+    int count(Connection dbc) throws SQLException;
+}
