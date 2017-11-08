@@ -11,7 +11,7 @@ import java.util.Optional;
 import com.bolyartech.forge.server.db.DbUtils;
 
 
-public class ${entity.name}DaoImpl implements ${entity.name}Dao {
+public class ${entity.name}DbhImpl implements ${entity.name}Dbh {
 
     private final static String SQL_SELECT = 
         "$jdbc.sqlSelect";
@@ -32,59 +32,66 @@ public class ${entity.name}DaoImpl implements ${entity.name}Dao {
     private final static String SQL_COUNT_ALL = 
         "select count(*) from ${entity.databaseTable}";
 
-    private final ${entity.name} pojo;
 
-
-	public ${entity.name}DaoImpl(#foreach( $attribute in $entity.attributes)$attribute.type $attribute.name#if ($foreach.hasNext), #end#end) {
-        pojo = new ${entity.name}Impl(#foreach( $attribute in $entity.attributes)$attribute.name#if ($foreach.hasNext), #end#end);
-	}
-
-    
-    public ${entity.name}DaoImpl(${entity.name} pojo) {
-        this.pojo = pojo;
+    public ${entity.name}DbhImpl() {
     }
 
 
-#foreach( $attribute in $entity.attributes)
-	public $attribute.type ${attribute.getterWithGetPrefix}() {
-		return pojo.${attribute.getterWithGetPrefix}();
-	}
-
+    @Override
+    public ${entity.name} createNew(Connection dbc, 
+#foreach($attribute in $entity.attributes)#if ($attribute.name != "id")
+                                        final ${attribute.type} ${attribute.name}#if ($foreach.hasNext), #else) throws SQLException {
+#end#end
 
 #end
-
-    @Override
-    public ${entity.name}Dao createNew(Connection dbc, #foreach($attribute in $entity.attributes)#if ($attribute.name != "id")final ${attribute.type} ${attribute.name}#if ($foreach.hasNext), #end#end#end) throws SQLException {
         DbUtils.ensureOperationalDbc(dbc);
 
         try (PreparedStatement psInsert = dbc.prepareStatement(SQL_INSERT, Statement.RETURN_GENERATED_KEYS)) {
             int i = 1;
 #foreach( $attribute in $jdbc.attributesForInsert )
-            SetValueUtils.setValue(psInsert, i, ${attribute.getterWithGetPrefix}() ); #if ($foreach.hasNext)i++; #end
+            SetValueUtils.setValue(psInsert, i, ${attribute.name} ); #if ($foreach.hasNext)i++; #end
 
 #end
             psInsert.executeUpdate();
 
             try (ResultSet rs = psInsert.getGeneratedKeys()) {
                 rs.next();
-                return new ${entity.name}DaoImpl(rs.getLong(1), #foreach($attribute in $entity.attributes)#if ($attribute.name != "id")${attribute.name}#if ($foreach.hasNext), #end#end#end);
+                return new ${entity.name}Impl(rs.getLong(1), 
+#foreach($attribute in $entity.attributes)#if ($attribute.name != "id")
+                                                    ${attribute.name}#if ($foreach.hasNext), #else);
+#end#end
+
+#end
             } 
         }
     }
 
 
     @Override
-    public Optional<${entity.name}Dao> update(Connection dbc, #foreach($attribute in $entity.attributes)#if ($attribute.name != "id")final ${attribute.type} ${attribute.name}#if ($foreach.hasNext), #end#end#end) throws SQLException {
+    public Optional<${entity.name}> update(Connection dbc,
+#foreach($attribute in $entity.attributes)
+                                                final ${attribute.type} ${attribute.name}#if ($foreach.hasNext), #else) throws SQLException {
+#end
+
+#end
+
         DbUtils.ensureOperationalDbc(dbc);
         
         try (PreparedStatement psUpdate = dbc.prepareStatement(SQL_UPDATE)) {
             int i = 1;
 #foreach( $attribute in $jdbc.attributesForInsert )
-            SetValueUtils.setValue(psUpdate, i, ${attribute.getterWithGetPrefix}() ); #if ($foreach.hasNext)i++; #end
+            SetValueUtils.setValue(psUpdate, i, ${attribute.name} ); i++;
 
 #end
+            ps.setLong(i, id);
+
             if (psUpdate.executeUpdate() > 0) {
-                return Optional.of(new ${entity.name}DaoImpl(pojo.getId(), #foreach($attribute in $entity.attributes)#if ($attribute.name != "id")${attribute.name}#if ($foreach.hasNext), #end#end#end));
+                return Optional.of(new ${entity.name}Impl(id, 
+#foreach($attribute in $entity.attributes)#if ($attribute.name != "id")
+                                                                ${attribute.name}#if ($foreach.hasNext), #else));
+#end#end
+
+#end
             } else {
                 return Optional.empty();
             }
@@ -93,7 +100,7 @@ public class ${entity.name}DaoImpl implements ${entity.name}Dao {
 
 
     @Override
-    public Optional<${entity.name}Dao> loadById(Connection dbc, final long id) throws SQLException {
+    public Optional<${entity.name}> loadById(Connection dbc, final long id) throws SQLException {
         DbUtils.ensureOperationalDbc(dbc);
 
         if (id <= 0) {
@@ -105,7 +112,12 @@ public class ${entity.name}DaoImpl implements ${entity.name}Dao {
 
             try (ResultSet rs = psLoad.executeQuery()) {
                 if (rs.next()) {
-                    return Optional.of(new ${entity.name}DaoImpl(#foreach( $attribute in $jdbc.attributesForSelect)rs.$jdbc.resultSetGetter($attribute)("$attribute.databaseName")#if ($foreach.hasNext), #end#end));
+                    return Optional.of(new ${entity.name}Impl(
+#foreach( $attribute in $jdbc.attributesForSelect)
+                                                            rs.$jdbc.resultSetGetter($attribute)("$attribute.databaseName")#if ($foreach.hasNext), #else)); 
+#end
+
+#end
                 } else {
                     return Optional.empty();
                 }
@@ -115,11 +127,14 @@ public class ${entity.name}DaoImpl implements ${entity.name}Dao {
 
 
     @Override
-    public boolean delete(Connection dbc) throws SQLException {
+    public boolean delete(Connection dbc, long id) throws SQLException {
         DbUtils.ensureOperationalDbc(dbc);
+        if (id <= 0) {
+            throw new IllegalArgumentException("id <= 0");
+        }
 
         try(PreparedStatement psDelete = dbc.prepareStatement(SQL_DELETE)) {
-            psDelete.setLong(1, pojo.getId());
+            psDelete.setLong(1, id);
             return psDelete.executeUpdate() == 1;
         } 
     }

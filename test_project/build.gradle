@@ -1,0 +1,17 @@
+group 'com.bolyartech.java'
+version '1.0-SNAPSHOT'
+
+apply plugin: 'java'
+
+sourceCompatibility = 1.8
+
+repositories {
+    mavenCentral()
+    jcenter()
+}
+
+dependencies {
+    compile 'mysql:mysql-connector-java:5.1.37'
+    compile 'com.bolyartech.forge:forge-server:5.2.2'
+    testCompile group: 'junit', name: 'junit', version: '4.12'
+}

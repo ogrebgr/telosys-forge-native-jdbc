@@ -1,0 +1,26 @@
+package ${target.javaPackageFromFolder($SRC)};
+
+import java.sql.Connection;
+import java.sql.SQLException;
+import java.util.Optional;
+
+
+public interface ${entity.name}Dbh extends ${entity.name} {
+    ${entity.name} createNew(Connection dbc, 
+#foreach($attribute in $entity.attributes)#if ($attribute.name != "id")
+                                final ${attribute.type} ${attribute.name}#if ($foreach.hasNext), #else) throws SQLException;
+#end#end
+
+#end
+
+                                
+    Optional<${entity.name}> update(Connection dbc,
+#foreach($attribute in $entity.attributes)
+                                        final ${attribute.type} ${attribute.name}#if ($foreach.hasNext), #else) throws SQLException;
+ #end
+
+#end
+    Optional<${entity.name}> loadById(Connection dbc, final long id) throws SQLException;
+    boolean delete(Connection dbc, long id) throws SQLException;
+    int count(Connection dbc) throws SQLException;
+}

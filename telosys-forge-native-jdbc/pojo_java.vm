@@ -1,8 +1,8 @@
 ##--------------------------------------------------------------------------------------------------------
 #set( $uncapitalizedEntityName = $fn.uncapitalize($entity.name) )
 ##--------------------------------------------------------------------------------------------------------
-
 package ${target.javaPackageFromFolder($SRC)};
+
 
 public class ${entity.name}Impl implements ${entity.name} {
 #foreach( $attribute in $entity.attributes)
@@ -10,7 +10,10 @@ public class ${entity.name}Impl implements ${entity.name} {
 #end
 
 
-    public ${entity.name}Impl(#foreach( $attribute in $entity.attributes)$attribute.type $attribute.name#if ($foreach.hasNext), #end#end) {
+    public ${entity.name}Impl(
+#foreach($attribute in $entity.attributes)
+                            $attribute.type $attribute.name#if ($foreach.hasNext), 
+#end#end) {
 #foreach( $attribute in $entity.attributes)
         this.$attribute.name = $attribute.name;
 #end
