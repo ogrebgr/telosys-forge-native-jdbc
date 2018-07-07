@@ -1,7 +1,0 @@
-package ${target.javaPackageFromFolder($SRC)};
-
-public interface ${entity.name} {
-#foreach( $attribute in $entity.attributes)
-     ${attribute.type} ${attribute.getterWithGetPrefix}();
-#end
-}

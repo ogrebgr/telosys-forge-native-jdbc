@@ -11,7 +11,7 @@ import java.util.Optional;
 import com.bolyartech.forge.server.db.DbUtils;
 
 
-public class ${entity.name}DbhImpl implements ${entity.name}Dbh {
+public class ${entity.name}DbImpl implements ${entity.name}Db {
 
     private final static String SQL_SELECT = 
         "$jdbc.sqlSelect";
@@ -33,7 +33,7 @@ public class ${entity.name}DbhImpl implements ${entity.name}Dbh {
         "select count(*) from ${entity.databaseTable}";
 
 
-    public ${entity.name}DbhImpl() {
+    public ${entity.name}DbImpl() {
     }
 
 
@@ -56,7 +56,7 @@ public class ${entity.name}DbhImpl implements ${entity.name}Dbh {
 
             try (ResultSet rs = psInsert.getGeneratedKeys()) {
                 rs.next();
-                return new ${entity.name}Impl(rs.getLong(1), 
+                return new ${entity.name}(rs.getLong(1), 
 #foreach($attribute in $entity.attributes)#if ($attribute.name != "id")
                                                     ${attribute.name}#if ($foreach.hasNext), #else);
 #end#end
@@ -83,10 +83,10 @@ public class ${entity.name}DbhImpl implements ${entity.name}Dbh {
             SetValueUtils.setValue(psUpdate, i, ${attribute.name} ); i++;
 
 #end
-            ps.setLong(i, id);
+            psUpdate.setLong(i, id);
 
             if (psUpdate.executeUpdate() > 0) {
-                return Optional.of(new ${entity.name}Impl(id, 
+                return Optional.of(new ${entity.name}(id, 
 #foreach($attribute in $entity.attributes)#if ($attribute.name != "id")
                                                                 ${attribute.name}#if ($foreach.hasNext), #else));
 #end#end
@@ -112,7 +112,7 @@ public class ${entity.name}DbhImpl implements ${entity.name}Dbh {
 
             try (ResultSet rs = psLoad.executeQuery()) {
                 if (rs.next()) {
-                    return Optional.of(new ${entity.name}Impl(
+                    return Optional.of(new ${entity.name}(
 #foreach( $attribute in $jdbc.attributesForSelect)
                                                             rs.$jdbc.resultSetGetter($attribute)("$attribute.databaseName")#if ($foreach.hasNext), #else)); 
 #end

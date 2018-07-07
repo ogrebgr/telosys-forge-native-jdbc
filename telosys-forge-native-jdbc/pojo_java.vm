@@ -4,15 +4,15 @@
 package ${target.javaPackageFromFolder($SRC)};
 
 
-public class ${entity.name}Impl implements ${entity.name} {
+public class ${entity.name} {
 #foreach( $attribute in $entity.attributes)
-    private final $attribute.type $attribute.name;
+    private final #if ($attribute.type == "Integer")long#else$attribute.type#end $attribute.name;
 #end
 
 
-    public ${entity.name}Impl(
+    public ${entity.name}(
 #foreach($attribute in $entity.attributes)
-                            $attribute.type $attribute.name#if ($foreach.hasNext), 
+                            #if ($attribute.type == "Integer")long#else$attribute.type#end $attribute.name#if ($foreach.hasNext), 
 #end#end) {
 #foreach( $attribute in $entity.attributes)
         this.$attribute.name = $attribute.name;
@@ -21,8 +21,7 @@ public class ${entity.name}Impl implements ${entity.name} {
     
 
 #foreach( $attribute in $entity.attributes)
-    @Override
-    public $attribute.type ${attribute.getterWithGetPrefix}() {
+    public #if ($attribute.type == "Integer")long#else$attribute.type#end ${attribute.getterWithGetPrefix}() {
         return $attribute.name;
     }
 

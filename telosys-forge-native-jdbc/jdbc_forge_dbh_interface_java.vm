@@ -5,7 +5,7 @@ import java.sql.SQLException;
 import java.util.Optional;
 
 
-public interface ${entity.name}Dbh extends ${entity.name} {
+public interface ${entity.name}Db  {
     ${entity.name} createNew(Connection dbc, 
 #foreach($attribute in $entity.attributes)#if ($attribute.name != "id")
                                 final ${attribute.type} ${attribute.name}#if ($foreach.hasNext), #else) throws SQLException;
