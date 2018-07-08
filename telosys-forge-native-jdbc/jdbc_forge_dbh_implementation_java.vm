@@ -142,6 +142,7 @@ public class ${entity.name}DbImpl implements ${entity.name}Db {
     }
 
 
+    @Override
     public int count(Connection dbc) throws SQLException {
         DbUtils.ensureOperationalDbc(dbc);
 
@@ -157,6 +158,7 @@ public class ${entity.name}DbImpl implements ${entity.name}Db {
     }
 
 
+    @Override
     public List<${entity.name}> loadAll(Connection dbc) throws SQLException {
         DbUtils.ensureOperationalDbc(dbc);
 
