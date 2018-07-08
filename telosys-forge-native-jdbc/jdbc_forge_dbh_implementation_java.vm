@@ -26,6 +26,8 @@ public class ${entity.name}DbImpl implements ${entity.name}Db {
         "NO UPDATE (NO DATA)";
 #end
 
+    private final static String SQL_SELECT_ALL = "select #foreach( $attribute in $entity.attributes)${attribute.getDatabaseName()}#if ($foreach.hasNext), #else" + #end#end" from $entity.databaseTable";
+ 
     private final static String SQL_DELETE = 
         "$jdbc.sqlDelete";
 
@@ -152,5 +154,27 @@ public class ${entity.name}DbImpl implements ${entity.name}Db {
         }
 
         return -1;
+    }
+
+
+    public List<${entity.name}> loadAll(Connection dbc) throws SQLException {
+        DbUtils.ensureOperationalDbc(dbc);
+
+        List<${entity.name}> ret = new ArrayList<>();
+        try (PreparedStatement psLoad = dbc.prepareStatement(SQL_SELECT)) {
+
+            try (ResultSet rs = psLoad.executeQuery()) {
+                while (rs.next()) {
+                    ret.add(new ${entity.name}(
+#foreach( $attribute in $jdbc.attributesForSelect)
+                                            rs.$jdbc.resultSetGetter($attribute)("$attribute.databaseName")#if ($foreach.hasNext), #else)); 
+#end
+
+#end
+                }
+            }
+        }
+
+        return ret;
     }
 }

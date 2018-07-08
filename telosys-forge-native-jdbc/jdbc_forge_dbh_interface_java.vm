@@ -22,5 +22,6 @@ public interface ${entity.name}Db  {
 #end
     Optional<${entity.name}> loadById(Connection dbc, final long id) throws SQLException;
     boolean delete(Connection dbc, long id) throws SQLException;
+    List<${entity.name}> loadAll(Connection dbc) throws SQLException;
     int count(Connection dbc) throws SQLException;
 }
