@@ -163,7 +163,7 @@ public class ${entity.name}DbImpl implements ${entity.name}Db {
         DbUtils.ensureOperationalDbc(dbc);
 
         List<${entity.name}> ret = new ArrayList<>();
-        try (PreparedStatement psLoad = dbc.prepareStatement(SQL_SELECT)) {
+        try (PreparedStatement psLoad = dbc.prepareStatement(SQL_SELECT_ALL)) {
 
             try (ResultSet rs = psLoad.executeQuery()) {
                 while (rs.next()) {
